@@ -100,6 +100,8 @@ docker network ls
 docker run -d \
     --name linux \
     --network practice-net \
+    -e APP_MODE=manual \
+    -e PORT=8080 \
     basic-linux:1.0
 
 # Web 컨테이너 실행
@@ -122,6 +124,21 @@ curl http://localhost:8080
 
 # Web에서 Linux 컨테이너로 요청
 curl http://localhost:8080/who
+
+# 환경변수 변경 (포트)
+docker run -d \
+    --name linux-env \
+    -e APP_MODE=port-test \
+    -e PORT=9090 \
+    -p 9090:9090 \
+    basic-linux:1.0
+
+# 환경변수 변경 확인
+docker exec linux-env printenv APP_MODE PORT
+curl http://localhost:9090
+
+# 변경 실험 정리
+docker rm -f linux-env
 
 # 컨테이너 간 직접 통신 확인 (exec)
 docker exec web curl -s http://linux:8080/who
@@ -168,6 +185,9 @@ docker ps -a
 # 컨테이너가 종료되더라도 마운트한 로그는 남아있어야 한다.
 cat logs/access.log
 
+# 환경변수 파일 생성
+cp .env.example .env
+
 # Compose 버전 확인
 docker compose version
 
@@ -180,9 +200,13 @@ docker compose up -d --build
 # Compose 상태 확인
 docker compose ps
 
+# Compose 환경변수 확인
+docker compose exec linux printenv APP_MODE
+docker compose exec linux printenv PORT
+
 # 서비스 호출
-curl http://localhost:8080
-curl http://localhost:8080/who
+curl http://localhost:8081
+curl http://localhost:8081/who
 
 # Compose 전체 로그 확인
 docker compose logs
@@ -194,7 +218,7 @@ docker compose ps
 
 # Compose 환경에서 exec
 docker compose exec linux whoami
-docker compose exec web curl -s http://linux:8080/who
+docker compose exec web curl -s http://linux:8081/who
 docker compose exec linux sh
 whoami
 exit
@@ -208,10 +232,6 @@ cat logs/access.log
 
 # GitHub 저장
 touch logs/.gitkeep
-cat > .gitignore \
-    .DS_Store \
-    logs/* \
-    !logs/.gitkeep
 git add .
 git commit -m "Add basic Docker practice codes"
 git push
@@ -220,7 +240,7 @@ git status
 
 
 ## 5) 수행 로그
-₩terminal.log` 참고
+`terminal.log` 참고
 
 
 ## 6) 트러블슈팅 내역

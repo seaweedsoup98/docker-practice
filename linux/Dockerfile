@@ -9,6 +9,9 @@ WORKDIR /app
 
 COPY server.py .
 
+ENV APP_MODE=development \
+    PORT=8080
+
 USER Codyssey
 
 EXPOSE 8080

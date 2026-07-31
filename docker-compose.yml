@@ -2,6 +2,9 @@ services:
   linux:
     build: ./linux
     image: basic-linux:1.0
+    environment:
+      APP_MODE: "${APP_MODE:-compose}"
+      PORT: "8080"
 
   web:
     build: ./web
@@ -9,6 +12,6 @@ services:
     depends_on:
       - linux
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     volumes:
       - ./logs:/logs
