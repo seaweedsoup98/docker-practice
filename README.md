@@ -28,7 +28,7 @@
 
 ## 4) 수행 방법
 
-₩₩₩bash
+```bash
 # 현재 위치 확인
 pwd
 
@@ -227,7 +227,7 @@ git status
 
 ### 1. zsh에서 ₩!₩ 사용 문제
 
-₩₩₩bash
+```bash
 echo "Hello World!" > src/file.txt
 ```
 
