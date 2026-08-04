@@ -1,0 +1,32 @@
+jiho.ko0987@c6r8s8 src % rm -rf src
+jiho.ko0987@c6r8s8 src % cd ../
+jiho.ko0987@c6r8s8 docker-practice % rm -rf src
+jiho.ko0987@c6r8s8 docker-practice % clear
+jiho.ko0987@c6r8s8 docker-practice % pwd
+/Users/jiho.ko0987/code/docker-practice
+jiho.ko0987@c6r8s8 docker-practice % ls -a
+.                       .env.example            .gitignore              linux                   terminal.log
+..                      .git                    docker-compose.yml      README.md               web
+jiho.ko0987@c6r8s8 docker-practice % mkdir src
+jiho.ko0987@c6r8s8 docker-practice % cd ./src/
+jiho.ko0987@c6r8s8 src % touch empty_file.txt
+jiho.ko0987@c6r8s8 src % echo "Hello World" > file.txt
+jiho.ko0987@c6r8s8 src % cat file.txt
+Hello World
+jiho.ko0987@c6r8s8 src % ls -l file.txt
+-rw-r--r--  1 jiho.ko0987  jiho.ko0987  12 Aug  4 21:15 file.txt
+jiho.ko0987@c6r8s8 src % chmod 600 file.txt
+jiho.ko0987@c6r8s8 src % ls -l file.txt
+-rw-------  1 jiho.ko0987  jiho.ko0987  12 Aug  4 21:15 file.txt
+jiho.ko0987@c6r8s8 src % cp file.txt file2.txt
+jiho.ko0987@c6r8s8 src % cat file2.txt 
+Hello World
+jiho.ko0987@c6r8s8 src % mv file2.txt ../
+jiho.ko0987@c6r8s8 src % cd ../ && cat file2.txt
+Hello World
+jiho.ko0987@c6r8s8 docker-practice % mv file2.txt src/file3.txt
+jiho.ko0987@c6r8s8 docker-practice % cat src/file3.txt
+Hello World
+jiho.ko0987@c6r8s8 docker-practice % rm src/file3.txt 
+jiho.ko0987@c6r8s8 docker-practice % ls -a src/  
+.               ..              empty_file.txt  file.txt

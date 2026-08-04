@@ -230,8 +230,14 @@ docker compose ps
 # 로그 파일은 여전히 영속성을 지니므로 남는다.
 cat logs/access.log
 
-# GitHub 저장
+# GitHub logs/ 폴더 업로드
 touch logs/.gitkeep
+
+# GitHub 사용자 설정
+git config --local user.name seaweedsoup98
+git config --local user.email seaweedsoup98@gmail.com
+
+# GitHub 업로드
 git add .
 git commit -m "Add basic Docker practice codes"
 git push
