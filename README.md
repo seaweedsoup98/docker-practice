@@ -73,6 +73,7 @@ rm src/file3.txt
 
 # Docker 버전 확인
 docker version
+docker --version
 
 # Docker 데몬 동작 여부 확인
 docker info
@@ -163,7 +164,7 @@ docker exec web tail /logs/access.log
 docker exec -it linux sh
 whoami
 pwd
-ps
+ls
 exit
 
 # exec vs attach: 따라서 exec은 shell에서 exit해도 메인 서버는 계속 실행됨
