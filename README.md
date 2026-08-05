@@ -247,7 +247,7 @@ git status
 
 
 ## 5) 수행 로그
-`terminal.log` 참고
+`terminal_log*.txt` 참고
 
 
 ## 6) 트러블슈팅 내역
