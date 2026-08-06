@@ -326,6 +326,45 @@ git add .
 git commit -m "Add basic Docker practice codes"
 git push
 git status
+
+# SSH 디렉터리 준비
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# SSH 키 생성
+ssh-keygen -t ed25519 -C "seaweedsoup98@github" -f ~/.ssh/id_ed25519 -N ""
+
+# 공개 키 클립보드 복사
+pbcopy < ~/.ssh/id_ed25519.pub
+
+# GitHub에 공개 키 등록
+
+# SSH 인증 확인
+SSH_OUTPUT="$(ssh -T git@github.com 2>&1 || true)"
+
+printf '%s\n' "$SSH_OUTPUT"
+printf '%s\n' "$SSH_OUTPUT" |
+    grep -q "successfully authenticated"
+
+# 기존 저장소의 원격 주소를 SSH 방식으로 변경
+git remote -v
+
+git remote set-url \
+    origin \
+    git@github.com:seaweedsoup98/docker-practice.git
+
+git remote -v
+
+# 변경 내용 commit
+git add .
+git status
+
+git commit -m "Complete Docker practice documentation"
+
+git push -u origin main
+
+git status
+git log --oneline -3
 ```
 
 ## 6. 수행 로그

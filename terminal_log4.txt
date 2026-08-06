@@ -1,0 +1,67 @@
+jiho.ko0987@c6r8s8 docker-practice % touch logs/.gitkeep
+jiho.ko0987@c6r8s8 docker-practice % touch backups/.gitkeep
+jiho.ko0987@c6r8s8 docker-practice % git config --local user.name seaweedsoup98
+jiho.ko0987@c6r8s8 docker-practice % git config --local user.email seaweedsoup98@gmail.com
+jiho.ko0987@c6r8s8 docker-practice % git add .
+jiho.ko0987@c6r8s8 docker-practice % git commit -m "Add basic Docker practice codes"
+[main 837b06f] Add basic Docker practice codes
+ 9 files changed, 533 insertions(+), 326 deletions(-)
+ create mode 100644 backups/.gitkeep
+ delete mode 100644 terminal_log4.txt
+jiho.ko0987@c6r8s8 docker-practice % git push
+오브젝트 나열하는 중: 17, 완료.
+오브젝트 개수 세는 중: 100% (17/17), 완료.
+Delta compression using up to 6 threads
+오브젝트 압축하는 중: 100% (9/9), 완료.
+오브젝트 쓰는 중: 100% (9/9), 6.06 KiB | 3.03 MiB/s, 완료.
+Total 9 (delta 5), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (5/5), completed with 5 local objects.
+To https://github.com/seaweedsoup98/docker-practice.git
+   18121e1..837b06f  main -> main
+jiho.ko0987@c6r8s8 docker-practice % git status
+현재 브랜치 main
+브랜치가 'origin/main'에 맞게 업데이트된 상태입니다.
+
+커밋할 사항 없음, 작업 폴더 깨끗함
+jiho.ko0987@c6r8s8 docker-practice % mkdir -p ~/.ssh
+jiho.ko0987@c6r8s8 docker-practice % chmod 700 ~/.ssh
+jiho.ko0987@c6r8s8 docker-practice % ssh-keygen -t ed25519 -C "seaweedsoup98@github" -f ~/.ssh/id_ed25519 -N ""
+Generating public/private ed25519 key pair.
+Your identification has been saved in /Users/jiho.ko0987/.ssh/id_ed25519
+Your public key has been saved in /Users/jiho.ko0987/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:j4qXPR7hcSZ9AOp40CLaOk9X78Yqwe3fVIa2kUYofcY seaweedsoup98@github
+The key's randomart image is:
++--[ED25519 256]--+
+|        .        |
+|     . o +       |
+|  . o + o E      |
+| o . = . = +     |
+|. ....+ S X +    |
+| .  oo.o @ *     |
+|o . .o += +      |
+| + ...+o=+       |
+|  . .oo=+..      |
++----[SHA256]-----+
+jiho.ko0987@c6r8s8 docker-practice % pbcopy < ~/.ssh/id_ed25519.pub
+jiho.ko0987@c6r8s8 docker-practice % SSH_OUTPUT="$(ssh -T git@github.com 2>&1 || true)"
+
+printf '%s\n' "$SSH_OUTPUT"
+printf '%s\n' "$SSH_OUTPUT" |
+    grep -q "successfully authenticated"
+The authenticity of host 'github.com (20.200.245.247)' can't be established.
+ED25519 key fingerprint is SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'github.com' (ED25519) to the list of known hosts.
+Hi seaweedsoup98! You've successfully authenticated, but GitHub does not provide shell access.
+jiho.ko0987@c6r8s8 docker-practice % git remote -v
+origin  https://github.com/seaweedsoup98/docker-practice.git (fetch)
+origin  https://github.com/seaweedsoup98/docker-practice.git (push)
+jiho.ko0987@c6r8s8 docker-practice % git remote set-url \
+    origin \
+    git@github.com:seaweedsoup98/docker-practice.git
+jiho.ko0987@c6r8s8 docker-practice % git remote -v
+origin  git@github.com:seaweedsoup98/docker-practice.git (fetch)
+origin  git@github.com:seaweedsoup98/docker-practice.git (push)
+jiho.ko0987@c6r8s8 docker-practice % 
