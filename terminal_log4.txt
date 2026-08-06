@@ -64,4 +64,38 @@ jiho.ko0987@c6r8s8 docker-practice % git remote set-url \
 jiho.ko0987@c6r8s8 docker-practice % git remote -v
 origin  git@github.com:seaweedsoup98/docker-practice.git (fetch)
 origin  git@github.com:seaweedsoup98/docker-practice.git (push)
+jiho.ko0987@c6r8s8 docker-practice % git add .
+jiho.ko0987@c6r8s8 docker-practice % git status
+현재 브랜치 main
+브랜치가 'origin/main'에 맞게 업데이트된 상태입니다.
+
+커밋할 변경 사항:
+  (use "git restore --staged <file>..." to unstage)
+        수정함:        README.md
+        새 파일:       terminal_log4.txt
+
+jiho.ko0987@c6r8s8 docker-practice % git commit -m "Complete Docker practice documentation"
+[main c297532] Complete Docker practice documentation
+ 2 files changed, 106 insertions(+)
+ create mode 100644 terminal_log4.txt
+jiho.ko0987@c6r8s8 docker-practice % git push -u origin main
+오브젝트 나열하는 중: 6, 완료.
+오브젝트 개수 세는 중: 100% (6/6), 완료.
+Delta compression using up to 6 threads
+오브젝트 압축하는 중: 100% (4/4), 완료.
+오브젝트 쓰는 중: 100% (4/4), 2.20 KiB | 2.20 MiB/s, 완료.
+Total 4 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
+To github.com:seaweedsoup98/docker-practice.git
+   837b06f..c297532  main -> main
+branch 'main' set up to track 'origin/main'.
+jiho.ko0987@c6r8s8 docker-practice % git status
+현재 브랜치 main
+브랜치가 'origin/main'에 맞게 업데이트된 상태입니다.
+
+커밋할 사항 없음, 작업 폴더 깨끗함
+jiho.ko0987@c6r8s8 docker-practice % git log --oneline -3
+c297532 (HEAD -> main, origin/main, origin/HEAD) Complete Docker practice documentation
+837b06f Add basic Docker practice codes
+18121e1 modify log extension format
 jiho.ko0987@c6r8s8 docker-practice % 
