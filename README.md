@@ -1,10 +1,23 @@
 # docker-practice
 
-## 1) 프로젝트 개요
+## 1. 프로젝트 개요
 리눅스 터미널, Docker. Git/GitHub 사용 연습 프로젝트
 
+## 2. 프로젝트 구조
+```text
+docker-practice/
+├── .env.example          # Compose 환경변수 예시
+├── docker-compose.yml    # 멀티 컨테이너 실행 설정
+├── web/                  # Nginx 이미지와 정적 콘텐츠
+├── linux/                # Python 서버 이미지
+├── src/                  # 파일 및 권한 실습
+├── logs/                 # 기본 Nginx 로그 경로
+├── logs-alt/             # 대체 로그 경로 실습용, Git 제외
+├── backups/              # named volume 백업 위치
+└── terminal_log*.txt     # 명령 및 출력 기록
+```
 
-## 2) 실행 환경
+## 3. 실행 환경
 - OS: Sequoia 15.75
 - Shell: zsh
 - Docker version 28.5.2, build ecc6942
@@ -12,7 +25,7 @@
 - git version 2.53.0
 
 
-## 3) 수행 체크리스트 
+## 4. 수행 체크리스트 
 - [x] 터미널 기본 조작 및 폴더 구성 
 - [x] 권한 변경 실습
 - [x] Docker 설치/점검
@@ -21,12 +34,16 @@
 - [x] 포트 매핑 접속
 - [x] 바인드 마운트 반영
 - [x] 볼륨 영속성 확인
+- [x] 대체 호스트 포트 및 로그 경로 적용
+- [x] Docker named volume 생성 및 검사
+- [x] 컨테이너 삭제 후 named volume 영속성 확인
+- [x] named volume 백업
 - [x] Git 설정 + GitHub 연동
 - [x] Docker Compose 세팅 및 운영
 - [x] 환경 변수 주입
 
 
-## 4) 수행 방법
+## 5. 수행 방법
 
 ```bash
 # 현재 위치 확인
@@ -56,6 +73,9 @@ ls -l file.txt
 # 파일 권한 수정
 chmod 600 file.txt
 
+# 파일 권한 재확인
+ls -l file.txt
+
 # 파일 복사 (폴더는 -r 옵션 필수)
 cp file.txt file2.txt
 cat file2.txt
@@ -72,7 +92,6 @@ cat src/file3.txt
 rm src/file3.txt
 
 # Docker 버전 확인
-docker version
 docker --version
 
 # Docker 데몬 동작 여부 확인
@@ -189,6 +208,26 @@ cat logs/access.log
 # 환경변수 파일 생성
 cp .env.example .env
 
+# 백업 및 대체 로그 디렉터리 준비
+mkdir -p backups logs-alt
+
+# Docker named volume 생성 및 확인
+docker volume create practice-data
+docker volume ls
+docker volume inspect practice-data
+
+# named volume에 데이터 기록
+docker run --rm \
+    --mount type=volume,source=practice-data,target=/data \
+    alpine \
+    sh -c 'echo "named volume data" > /data/result.txt'
+
+# named volume 확인
+docker run --rm \
+    --mount type=volume,source=practice-data,target=/data,readonly \
+    alpine \
+    sh -c 'ls -la /data && echo "--- result.txt ---" && cat /data/result.txt'
+
 # Compose 버전 확인
 docker compose version
 
@@ -202,8 +241,7 @@ docker compose up -d --build
 docker compose ps
 
 # Compose 환경변수 확인
-docker compose exec linux printenv APP_MODE
-docker compose exec linux printenv PORT
+docker compose exec linux printenv APP_MODE PORT
 
 # 서비스 호출
 curl http://localhost:8081
@@ -219,7 +257,7 @@ docker compose ps
 
 # Compose 환경에서 exec
 docker compose exec linux whoami
-docker compose exec web curl -s http://linux:8081/who
+docker compose exec web curl -s http://linux:8080/who
 docker compose exec linux sh
 whoami
 exit
@@ -231,8 +269,53 @@ docker compose ps
 # 로그 파일은 여전히 영속성을 지니므로 남는다.
 cat logs/access.log
 
-# GitHub logs/ 폴더 업로드
+# 대체 포트와 대체 로그 경로로 Compose 실행
+WEB_PORT=8082 \
+LOG_DIR="$PWD/logs-alt" \
+docker compose up -d --build
+
+# Compose 상태 및 대체 포트 확인
+docker compose ps
+curl http://localhost:8082
+curl http://localhost:8082/who
+
+# 컨테이너 간 통신 확인
+docker compose exec web curl -s http://linux:8080/who
+
+# Compose에 연결된 named volume 확인
+docker compose exec linux ls -l /data
+docker compose exec linux cat /data/result.txt
+
+# 대체 로그 경로 확인
+ls -l logs-alt
+tail logs-alt/access.log
+
+# 컨테이너 삭제
+docker compose down
+
+# Compose 컨테이너 삭제 후에도 volume이 존재하는지 확인
+docker volume inspect practice-data
+
+# 새 컨테이너에서 영속 데이터 재확인
+docker run --rm \
+    --mount type=volume,source=practice-data,target=/data \
+    alpine \
+    cat /data/result.txt
+
+# named volume 백업
+docker run --rm \
+    --mount type=volume,source=practice-data,target=/data,readonly \
+    --mount type=bind,source="$PWD/backups",target=/backup \
+    alpine \
+    sh -c 'tar -czf /backup/practice-data-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .'
+
+# 백업 파일 확인
+ls -lh backups
+tar -tzf "$(ls -t backups/practice-data-*.tar.gz | head -1)"
+
+# GitHub 디렉토리 업로드
 touch logs/.gitkeep
+touch backups/.gitkeep
 
 # GitHub 사용자 설정
 git config --local user.name seaweedsoup98
@@ -245,14 +328,36 @@ git push
 git status
 ```
 
-
-## 5) 수행 로그
+## 6. 수행 로그
 `terminal_log*.txt` 참고
 
+## 7. 관리 정책
 
-## 6) 트러블슈팅 내역
+### 7-1. 포트 충돌 진단
 
-### 1. zsh에서 ₩!₩ 사용 문제
+```bash
+# Docker 컨테이너의 포트 사용 확인
+docker ps --format 'table {{.Names}}\t{{.Ports}}'
+docker ps --filter publish=8081
+
+# macOS 프로세스 포트 사용 확인
+lsof -nP -iTCP:8081 -sTCP:LISTEN
+
+# 기존 프로세스를 종료하기 어렵다면 대체 포트 사용
+WEB_PORT=8082 docker compose up -d
+```
+
+포트 충돌이 발생하면 Docker 컨테이너 확인, 프로세스 확인,
+대체 포트 적용 순서로 처리한다.
+
+### 7-2. Named volume 백업 정책
+
+`practice-data`는 주요 설정 변경 전과 주 1회 백업하며, 최근 백업 4개를 보관한다.
+
+
+## 8. 트러블슈팅 내역
+
+### 8-1. zsh에서 ₩!₩ 사용 문제
 
 ```bash
 echo "Hello World!" > src/file.txt

@@ -1,4 +1,41 @@
 jiho.ko0987@c6r8s8 docker-practice % cp .env.example .env
+jiho.ko0987@c6r8s8 docker-practice % mkdir -p backups logs-alt
+jiho.ko0987@c6r8s8 docker-practice % docker volume create practice-data
+practice-data
+jiho.ko0987@c6r8s8 docker-practice % docker volume ls
+DRIVER    VOLUME NAME
+local     practice-data
+jiho.ko0987@c6r8s8 docker-practice % docker volume inspect practice-data
+[
+    {
+        "CreatedAt": "2026-08-06T22:15:53+09:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/practice-data/_data",
+        "Name": "practice-data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+jiho.ko0987@c6r8s8 docker-practice % docker run --rm \
+    --mount type=volume,source=practice-data,target=/data \
+    alpine \
+    sh -c 'echo "named volume data" > /data/result.txt'
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+55afa1ecc21d: Already exists 
+Digest: sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+Status: Downloaded newer image for alpine:latest
+jiho.ko0987@c6r8s8 docker-practice % docker run --rm \
+    --mount type=volume,source=practice-data,target=/data,readonly \
+    alpine \
+    sh -c 'ls -la /data && echo "--- result.txt ---" && cat /data/result.txt'
+total 4
+drwxr-xr-x    1 root     root            20 Aug  6 13:16 .
+drwxr-xr-x    1 root     root            20 Aug  6 13:34 ..
+-rw-r--r--    1 root     root            18 Aug  6 13:16 result.txt
+--- result.txt ---
+named volume data
 jiho.ko0987@c6r8s8 docker-practice % docker compose version
 Docker Compose version v2.40.3
 jiho.ko0987@c6r8s8 docker-practice % docker compose config
@@ -14,6 +51,11 @@ services:
     image: basic-linux:1.0
     networks:
       default: null
+    volumes:
+      - type: volume
+        source: practice-data
+        target: /data
+        volume: {}
   web:
     build:
       context: /Users/jiho.ko0987/code/docker-practice/web
@@ -27,6 +69,7 @@ services:
       default: null
     ports:
       - mode: ingress
+        host_ip: 127.0.0.1
         target: 80
         published: "8081"
         protocol: tcp
@@ -39,6 +82,10 @@ services:
 networks:
   default:
     name: docker-practice_default
+volumes:
+  practice-data:
+    name: practice-data
+    external: true
 jiho.ko0987@c6r8s8 docker-practice % docker compose up -d --build
 [+] Building 2.5s (21/21) FINISHED                                                                                            
  => [internal] load local bake definitions                                                                               0.0s
@@ -51,9 +98,9 @@ jiho.ko0987@c6r8s8 docker-practice % docker compose up -d --build
  => [web internal] load metadata for docker.io/library/nginx:alpine                                                      0.0s
  => [web internal] load .dockerignore                                                                                    0.1s
  => => transferring context: 2B                                                                                          0.0s
+ => [web 1/4] FROM docker.io/library/nginx:alpine                                                                        0.0s
  => [web internal] load build context                                                                                    0.1s
  => => transferring context: 64B                                                                                         0.0s
- => [web 1/4] FROM docker.io/library/nginx:alpine                                                                        0.0s
  => CACHED [web 2/4] RUN apk add --no-cache curl                                                                         0.0s
  => CACHED [web 3/4] COPY index.html /usr/share/nginx/html/index.html                                                    0.0s
  => CACHED [web 4/4] COPY default.conf /etc/nginx/conf.d/default.conf                                                    0.0s
@@ -64,7 +111,7 @@ jiho.ko0987@c6r8s8 docker-practice % docker compose up -d --build
  => [web] resolving provenance for metadata file                                                                         0.0s
  => [linux internal] load .dockerignore                                                                                  0.1s
  => => transferring context: 2B                                                                                          0.0s
- => [linux 1/4] FROM docker.io/library/python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266  0.0s
+ => [linux 1/4] FROM docker.io/library/python:3.12-slim@sha256:646fb0bca3dd3ea1bcc6feb72c17ed16eed6e10cffc732fcc1478bd3  0.0s
  => [linux internal] load build context                                                                                  0.1s
  => => transferring context: 31B                                                                                         0.0s
  => CACHED [linux 2/4] RUN apt-get update     && apt-get install -y --no-install-recommends curl passwd     && rm -rf /  0.0s
@@ -72,22 +119,21 @@ jiho.ko0987@c6r8s8 docker-practice % docker compose up -d --build
  => CACHED [linux 4/4] COPY server.py .                                                                                  0.0s
  => [linux] exporting to image                                                                                           0.1s
  => => exporting layers                                                                                                  0.0s
- => => writing image sha256:18499e3c59a812d75b15e6afdcc999a5fd0f0f286efeb25ef512efc7301fb061                             0.0s
+ => => writing image sha256:89567efb3290c285db00594174ad13c48f9f1d6a603d0049b448d605798fdedf                             0.0s
  => => naming to docker.io/library/basic-linux:1.0                                                                       0.0s
  => [linux] resolving provenance for metadata file                                                                       0.0s
 [+] Running 5/5
- ✔ basic-web:1.0                      Built                                                                              0.0s 
  ✔ basic-linux:1.0                    Built                                                                              0.0s 
+ ✔ basic-web:1.0                      Built                                                                              0.0s 
  ✔ Network docker-practice_default    Created                                                                            0.1s 
  ✔ Container docker-practice-linux-1  Started                                                                            0.5s 
- ✔ Container docker-practice-web-1    Started                                                                            0.7s 
+ ✔ Container docker-practice-web-1    Started                                                                            0.6s 
 jiho.ko0987@c6r8s8 docker-practice % docker compose ps
-NAME                      IMAGE             COMMAND                  SERVICE   CREATED          STATUS         PORTS
-docker-practice-linux-1   basic-linux:1.0   "python server.py"       linux     10 seconds ago   Up 9 seconds   8080/tcp
-docker-practice-web-1     basic-web:1.0     "/docker-entrypoint.…"   web       10 seconds ago   Up 9 seconds   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
-jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux printenv APP_MODE
+NAME                      IMAGE             COMMAND                   SERVICE   CREATED          STATUS         PORTS
+docker-practice-linux-1   basic-linux:1.0   "python server.py"        linux     10 seconds ago   Up 8 seconds   8080/tcp
+docker-practice-web-1     basic-web:1.0     "/docker-entrypoint.…"   web       9 seconds ago    Up 8 seconds   127.0.0.1:8081->80/tcp
+jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux printenv APP_MODE PORT
 compose-practice
-jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux printenv PORT    
 8080
 jiho.ko0987@c6r8s8 docker-practice % curl http://localhost:8081
 <!doctype html>
@@ -102,7 +148,7 @@ jiho.ko0987@c6r8s8 docker-practice % curl http://localhost:8081/who
 Hello from linux container. user=Codyssey, mode=compose-practice, port=8080
 jiho.ko0987@c6r8s8 docker-practice % docker compose logs
 linux-1  | Starting server: user=Codyssey, mode=compose-practice, port=8080
-linux-1  | 192.168.97.3 - - [04/Aug/2026 12:44:26] "GET /who HTTP/1.1" 200 -
+linux-1  | 192.168.97.3 - - [06/Aug/2026 13:35:44] "GET /who HTTP/1.1" 200 -
 web-1    | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
 web-1    | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
 web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
@@ -112,33 +158,59 @@ web-1    | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolve
 web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
 web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
 web-1    | /docker-entrypoint.sh: Configuration complete; ready for start up
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: using the "epoll" event method
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: nginx/1.31.3
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker processes
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 29
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 30
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 31
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 32
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 33
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 34
-web-1    | 192.168.97.1 - - [04/Aug/2026:12:44:22 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
-web-1    | 192.168.97.1 - - [04/Aug/2026:12:44:26 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
-jiho.ko0987@c6r8s8 docker-practice % docker compose logs --tail 10
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: using the "epoll" event method
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: nginx/1.31.3
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker processes
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 29
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 30
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 31
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 32
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 33
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 34
+web-1    | 192.168.97.1 - - [06/Aug/2026:13:35:40 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+web-1    | 192.168.97.1 - - [06/Aug/2026:13:35:44 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+jiho.ko0987@c6r8s8 docker-practice % docker compose logs
+docker compose logs --tail 10
 linux-1  | Starting server: user=Codyssey, mode=compose-practice, port=8080
-linux-1  | 192.168.97.3 - - [04/Aug/2026 12:44:26] "GET /who HTTP/1.1" 200 -
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker processes
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 29
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 30
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 31
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 32
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 33
-web-1    | 2026/08/04 12:43:50 [notice] 1#1: start worker process 34
-web-1    | 192.168.97.1 - - [04/Aug/2026:12:44:22 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
-web-1    | 192.168.97.1 - - [04/Aug/2026:12:44:26 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+linux-1  | 192.168.97.3 - - [06/Aug/2026 13:35:44] "GET /who HTTP/1.1" 200 -
+web-1    | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+web-1    | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+web-1    | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+web-1    | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+web-1    | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+web-1    | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+web-1    | /docker-entrypoint.sh: Configuration complete; ready for start up
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: using the "epoll" event method
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: nginx/1.31.3
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker processes
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 29
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 30
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 31
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 32
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 33
+web-1    | 2026/08/06 13:34:47 [notice] 1#1: start worker process 34
+web-1    | 192.168.97.1 - - [06/Aug/2026:13:35:40 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+web-1    | 192.168.97.1 - - [06/Aug/2026:13:35:44 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker processes
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 29
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 30
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 31
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 32
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 33
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 34
+web-1  | 192.168.97.1 - - [06/Aug/2026:13:35:40 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+web-1  | 192.168.97.1 - - [06/Aug/2026:13:35:44 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+linux-1  | Starting server: user=Codyssey, mode=compose-practice, port=8080
+linux-1  | 192.168.97.3 - - [06/Aug/2026 13:35:44] "GET /who HTTP/1.1" 200 -
 jiho.ko0987@c6r8s8 docker-practice % docker compose logs -f web
 web-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
 web-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
@@ -149,44 +221,156 @@ web-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers
 web-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
 web-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
 web-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: using the "epoll" event method
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: nginx/1.31.3
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker processes
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 29
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 30
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 31
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 32
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 33
-web-1  | 2026/08/04 12:43:50 [notice] 1#1: start worker process 34
-web-1  | 192.168.97.1 - - [04/Aug/2026:12:44:22 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
-web-1  | 192.168.97.1 - - [04/Aug/2026:12:44:26 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
-c^C
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: using the "epoll" event method
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: nginx/1.31.3
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker processes
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 29
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 30
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 31
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 32
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 33
+web-1  | 2026/08/06 13:34:47 [notice] 1#1: start worker process 34
+web-1  | 192.168.97.1 - - [06/Aug/2026:13:35:40 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+web-1  | 192.168.97.1 - - [06/Aug/2026:13:35:44 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+q
+^[
+^C
 jiho.ko0987@c6r8s8 docker-practice % docker compose ps
-NAME                      IMAGE             COMMAND                  SERVICE   CREATED              STATUS              PORTS
-docker-practice-linux-1   basic-linux:1.0   "python server.py"       linux     About a minute ago   Up About a minute   8080/tcp
-docker-practice-web-1     basic-web:1.0     "/docker-entrypoint.…"   web       About a minute ago   Up About a minute   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
+NAME                      IMAGE             COMMAND                   SERVICE   CREATED              STATUS              PORTS
+docker-practice-linux-1   basic-linux:1.0   "python server.py"        linux     About a minute ago   Up About a minute   8080/tcp
+docker-practice-web-1     basic-web:1.0     "/docker-entrypoint.…"   web       About a minute ago   Up About a minute   127.0.0.1:8081->80/tcp
 jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux whoami
 Codyssey
-jiho.ko0987@c6r8s8 docker-practice % docker compose exec web curl -s http://linux:8081/who
+jiho.ko0987@c6r8s8 docker-practice % docker compose exec web curl -s http://linux:8080/who
+Hello from linux container. user=Codyssey, mode=compose-practice, port=8080
 jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux sh
 $ whoami
 Codyssey
 $ exit
 jiho.ko0987@c6r8s8 docker-practice % docker compose down
 [+] Running 3/3
- ✔ Container docker-practice-web-1    Removed                                                                            0.4s 
- ✔ Container docker-practice-linux-1  Removed                                                                           10.3s 
+ ✔ Container docker-practice-web-1    Removed                                                                            0.2s 
+ ✔ Container docker-practice-linux-1  Removed                                                                           10.2s 
  ✔ Network docker-practice_default    Removed                                                                            0.1s 
 jiho.ko0987@c6r8s8 docker-practice % docker compose ps
 NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
 jiho.ko0987@c6r8s8 docker-practice % cat logs/access.log
-192.168.97.1 - - [04/Aug/2026:12:24:21 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
-192.168.97.1 - - [04/Aug/2026:12:24:32 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
-192.168.97.1 - - [04/Aug/2026:12:26:04 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
-192.168.97.1 - - [04/Aug/2026:12:26:54 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
-192.168.97.1 - - [04/Aug/2026:12:44:22 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
-192.168.97.1 - - [04/Aug/2026:12:44:26 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
-jiho.ko0987@c6r8s8 docker-practice %    
+192.168.97.1 - - [06/Aug/2026:13:11:29 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:11:34 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:11:43 +0000] "GET / HTTP/1.1" 200 166 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+192.168.97.1 - - [06/Aug/2026:13:11:43 +0000] "GET /favicon.ico HTTP/1.1" 404 555 "http://localhost:8080/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+192.168.97.1 - - [06/Aug/2026:13:11:51 +0000] "GET /who HTTP/1.1" 200 66 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+192.168.97.1 - - [06/Aug/2026:13:13:10 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:14:07 +0000] "GET /who HTTP/1.1" 200 66 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:14:34 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:35:40 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:35:44 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+jiho.ko0987@c6r8s8 docker-practice % WEB_PORT=8082 \
+LOG_DIR="$PWD/logs-alt" \
+docker compose up -d --build
+[+] Building 1.7s (21/21) FINISHED                                                                                            
+ => [internal] load local bake definitions                                                                               0.0s
+ => => reading from stdin 999B                                                                                           0.0s
+ => [linux internal] load build definition from Dockerfile                                                               0.1s
+ => => transferring dockerfile: 341B                                                                                     0.0s
+ => [web internal] load build definition from Dockerfile                                                                 0.1s
+ => => transferring dockerfile: 196B                                                                                     0.0s
+ => [linux internal] load metadata for docker.io/library/python:3.12-slim                                                0.8s
+ => [web internal] load metadata for docker.io/library/nginx:alpine                                                      0.0s
+ => [web internal] load .dockerignore                                                                                    0.1s
+ => => transferring context: 2B                                                                                          0.0s
+ => [web 1/4] FROM docker.io/library/nginx:alpine                                                                        0.0s
+ => [web internal] load build context                                                                                    0.1s
+ => => transferring context: 64B                                                                                         0.0s
+ => CACHED [web 2/4] RUN apk add --no-cache curl                                                                         0.0s
+ => CACHED [web 3/4] COPY index.html /usr/share/nginx/html/index.html                                                    0.0s
+ => CACHED [web 4/4] COPY default.conf /etc/nginx/conf.d/default.conf                                                    0.0s
+ => [web] exporting to image                                                                                             0.0s
+ => => exporting layers                                                                                                  0.0s
+ => => writing image sha256:4d3b4358086c8da4c6fff043f98700158dbfe9f31a333514aff69c3bde0db406                             0.0s
+ => => naming to docker.io/library/basic-web:1.0                                                                         0.0s
+ => [web] resolving provenance for metadata file                                                                         0.0s
+ => [linux internal] load .dockerignore                                                                                  0.1s
+ => => transferring context: 2B                                                                                          0.0s
+ => [linux 1/4] FROM docker.io/library/python:3.12-slim@sha256:646fb0bca3dd3ea1bcc6feb72c17ed16eed6e10cffc732fcc1478bd3  0.0s
+ => [linux internal] load build context                                                                                  0.1s
+ => => transferring context: 31B                                                                                         0.0s
+ => CACHED [linux 2/4] RUN apt-get update     && apt-get install -y --no-install-recommends curl passwd     && rm -rf /  0.0s
+ => CACHED [linux 3/4] WORKDIR /app                                                                                      0.0s
+ => CACHED [linux 4/4] COPY server.py .                                                                                  0.0s
+ => [linux] exporting to image                                                                                           0.1s
+ => => exporting layers                                                                                                  0.0s
+ => => writing image sha256:89567efb3290c285db00594174ad13c48f9f1d6a603d0049b448d605798fdedf                             0.0s
+ => => naming to docker.io/library/basic-linux:1.0                                                                       0.0s
+ => [linux] resolving provenance for metadata file                                                                       0.0s
+[+] Running 5/5
+ ✔ basic-linux:1.0                    Built                                                                              0.0s 
+ ✔ basic-web:1.0                      Built                                                                              0.0s 
+ ✔ Network docker-practice_default    Created                                                                            0.1s 
+ ✔ Container docker-practice-linux-1  Started                                                                            0.5s 
+ ✔ Container docker-practice-web-1    Started                                                                            0.6s 
+jiho.ko0987@c6r8s8 docker-practice % docker compose ps
+NAME                      IMAGE             COMMAND                   SERVICE   CREATED         STATUS         PORTS
+docker-practice-linux-1   basic-linux:1.0   "python server.py"        linux     3 seconds ago   Up 2 seconds   8080/tcp
+docker-practice-web-1     basic-web:1.0     "/docker-entrypoint.…"   web       3 seconds ago   Up 2 seconds   127.0.0.1:8082->80/tcp
+jiho.ko0987@c6r8s8 docker-practice % curl http://localhost:8082
+<!doctype html>
+<html>
+<body>
+  <h1>Docker Basic Lab</h1>
+  <p>This page is stored in the web image.</p>
+  <p>Try: curl http://localhost:8080/who</p>
+</body>
+</html>
+jiho.ko0987@c6r8s8 docker-practice % curl http://localhost:8082/who
+Hello from linux container. user=Codyssey, mode=compose-practice, port=8080
+jiho.ko0987@c6r8s8 docker-practice % docker compose exec web curl -s http://linux:8080/who
+Hello from linux container. user=Codyssey, mode=compose-practice, port=8080
+jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux ls -l /data
+total 4
+-rw-r--r-- 1 root root 18 Aug  6 13:16 result.txt
+jiho.ko0987@c6r8s8 docker-practice % docker compose exec linux cat /data/result.txt
+named volume data
+jiho.ko0987@c6r8s8 docker-practice % ls -l logs-alt
+total 8
+-rw-r--r--  1 jiho.ko0987  jiho.ko0987  178  8  6 22:37 access.log
+jiho.ko0987@c6r8s8 docker-practice % tail logs-alt/access.log
+192.168.97.1 - - [06/Aug/2026:13:37:38 +0000] "GET / HTTP/1.1" 200 166 "-" "curl/8.7.1"
+192.168.97.1 - - [06/Aug/2026:13:37:42 +0000] "GET /who HTTP/1.1" 200 76 "-" "curl/8.7.1"
+jiho.ko0987@c6r8s8 docker-practice % docker compose down
+[+] Running 3/3
+ ✔ Container docker-practice-web-1    Removed                                                                            0.3s 
+ ✔ Container docker-practice-linux-1  Removed                                                                            9.9s 
+ ✔ Network docker-practice_default    Removed                                                                            0.1s 
+jiho.ko0987@c6r8s8 docker-practice % docker volume inspect practice-data
+[
+    {
+        "CreatedAt": "2026-08-06T22:15:53+09:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/practice-data/_data",
+        "Name": "practice-data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+jiho.ko0987@c6r8s8 docker-practice % docker run --rm \
+    --mount type=volume,source=practice-data,target=/data \
+    alpine \
+    cat /data/result.txt
+named volume data
+jiho.ko0987@c6r8s8 docker-practice % docker run --rm \
+    --mount type=volume,source=practice-data,target=/data,readonly \
+    --mount type=bind,source="$PWD/backups",target=/backup \
+    alpine \
+    sh -c 'tar -czf /backup/practice-data-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .'
+jiho.ko0987@c6r8s8 docker-practice % ls -lh backups
+total 8
+-rw-r--r--  1 jiho.ko0987  jiho.ko0987   149B  8  6 22:38 practice-data-20260806-133841.tar.gz
+jiho.ko0987@c6r8s8 docker-practice % tar -tzf "$(ls -t backups/practice-data-*.tar.gz | head -1)"
+./
+./result.txt
+jiho.ko0987@c6r8s8 docker-practice % 

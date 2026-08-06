@@ -3,3 +3,8 @@
 
 logs/*
 !logs/.gitkeep
+
+logs-alt/
+
+backups/*
+!backups/.gitkeep
